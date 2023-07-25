@@ -220,7 +220,7 @@ class Account:
         variables = {'tweet_id': tweet_id, 'dark_request': False}
         return self.gql('POST', Operation.DeleteTweet, variables)
 
-    def reply(self, text: str, tweet_id: int) -> dict:
+    def reply(self, text: str, tweet_id: int, media: any = None) -> dict:
         variables = {
             'tweet_text': text,
             'reply': {
@@ -235,6 +235,17 @@ class Account:
             },
             'semantic_annotation_ids': [],
         }
+
+        if media:
+            for m in media:
+                media_id = self._upload_media(m['media'])
+                variables['media']['media_entities'].append({
+                    'media_id': media_id,
+                    'tagged_users': m.get('tagged_users', [])
+                })
+                if alt := m.get('alt'):
+                    self._add_alt_text(media_id, alt)
+
         return self.gql('POST', Operation.CreateTweet, variables)
 
     def quote(self, text: str, tweet_id: int) -> dict:
